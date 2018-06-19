@@ -13,8 +13,54 @@
 *    version 0.1                                                 ;
 *                                                                ;
 *****************************************************************;
+/*
+  Import and Export excel files
+*/
 
-* How to use a lookup dataset;
+%let path = C:\sas\P20180617; 
+PROC IMPORT OUT=accounts 
+			DATAFILE="&path\requirement\Assignment.xlsx" 
+			DBMS=EXCEL 
+			REPLACE;
+	SHEET="SkillsRequired";
+	GETNAMES=YES;
+Run;
+
+PROC EXPORT DATA=subcompletedFinal label
+            FILE="&path\output\OverallSubjectCompleted&timestamp..xlsx"
+            DBMS=xlsx REPLACE;
+            SHEET="Sheet1";
+RUN;
+
+/*
+  Loop a dataset by macro
+*/
+%macro loopds(ds);
+data _null_;
+	if 0 then set &ds nobs=X;
+	call symputx('total_records', X, 'G');
+	stop;
+run;
+
+%do i=1 %to &total_records;
+	...
+%end;
+%mend loopds;
+
+/*
+  if a macro variable is blank, if equal to 1, it's blank
+*/
+%macro isBlank(param);
+%sysevalf(%superq(param)=,boolean)
+%mend isBlank;
+
+%if %isBlank(&type1)=1 %then %do;
+	...
+%end;
+
+/*
+  How to use a lookup dataset;
+*/
 Data A;
 	input id name $;
 	datalines;
@@ -164,23 +210,27 @@ data lab2b;
 	);
 run;
 
-* generate random number method one;
-* If you call the STREAMINIT subroutine with the value 0, 
-then SAS will use the date, time of day, 
-and possibly other information to manufacture a seed 
-when you call the RAND function. 
-SAS puts the seed value into the SYSRANDOM system macro variable. ;
+/* 
+  generate random number method one;
+  If you call the STREAMINIT subroutine with the value 0, 
+  then SAS will use the date, time of day, 
+  and possibly other information to manufacture a seed 
+  when you call the RAND function. 
+  SAS puts the seed value into the SYSRANDOM system macro variable. ;
+*/
 data _null_;
-call streaminit(0);   /* generate seed from system clock */
-x = rand("uniform");
+	call streaminit(0);   /* generate seed from system clock */
+	x = rand("uniform");
 run;
 %put &=SYSRANDOM;
 
-* generate random number method two;
-* A second method is to use the RAND function to 
-generate a random integer between 1 and 231-1, 
-which is the range of valid seed values for the Mersenne twister generator 
-in SAS 9.4m4.;
+/* 
+  generate random number method two;
+  A second method is to use the RAND function to 
+  generate a random integer between 1 and 231-1, 
+  which is the range of valid seed values for the Mersenne twister generator 
+  in SAS 9.4m4.;
+*/
 data _null_;
 call streaminit(0);
 seed = ceil( (2**31 - 1)*rand("uniform") ); 
@@ -188,13 +238,19 @@ put seed=;
 run;
 
 
-********* Adding leading Zeros to Numeric Variable *****************;
+/*
+  Adding leading Zeros to Numeric Variable
+*/
 data _null_;
- a=374747830939;
- b=put(a,z15.);
- format a z15.;
- put a= b=;
+	a=374747830939;
+	b=put(a,z15.);
+	format a z15.;
+	put a= b=;
 run;
+
+/*
+ Dulplicated data
+*/
 
 *********** delete dulplicated data;
 proc sort data=temp_dov2 out=temp_dov3 nodup ;
