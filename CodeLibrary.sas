@@ -14,6 +14,36 @@
 *                                                                ;
 *****************************************************************;
 /*
+  Randomly assign 20 subjects equally into two groups
+*/
+proc format;
+	value grpfmt 0='CONTROL' 1='TREATMENT';
+run;
+
+data random;
+	do subj=1 to 20;
+		group=ranuni(0);
+		output;
+	end;
+run;
+
+proc rank data=random group=2 out=split;
+	var group;
+run;
+
+proc print data=split noobs;
+	title "Subject Group Assignments";
+	var subj group;
+	format group grpfmt.;
+run;
+
+/*
+  When you set panels equal to a large number, proc report will attempt to fit
+  as many as columns across the page as possible.
+*/
+proc report with panels=99
+
+/*
   Import and Export excel files
 */
 
@@ -31,32 +61,6 @@ PROC EXPORT DATA=subcompletedFinal label
             DBMS=xlsx REPLACE;
             SHEET="Sheet1";
 RUN;
-
-/*
-  Loop a dataset by macro
-*/
-%macro loopds(ds);
-data _null_;
-	if 0 then set &ds nobs=X;
-	call symputx('total_records', X, 'G');
-	stop;
-run;
-
-%do i=1 %to &total_records;
-	...
-%end;
-%mend loopds;
-
-/*
-  if a macro variable is blank, if equal to 1, it's blank
-*/
-%macro isBlank(param);
-%sysevalf(%superq(param)=,boolean)
-%mend isBlank;
-
-%if %isBlank(&type1)=1 %then %do;
-	...
-%end;
 
 /*
   How to use a lookup dataset;
